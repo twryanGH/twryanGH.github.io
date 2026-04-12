@@ -66,6 +66,22 @@
       </div>
     </section>
 
+    <!-- Guestbook Section -->
+    <section class="guestbook-section">
+      <h2>Sunrise Guestbook</h2>
+      <p class="guestbook-intro">Share your favourite sunrise moment</p>
+
+      <form id="guestbook-form" class="guestbook-form">
+        <input type="text" id="gb-name" placeholder="Your name" maxlength="50" required>
+        <textarea id="gb-message" placeholder="Describe your sunrise moment..." maxlength="500" rows="3" required></textarea>
+        <button type="submit">Post</button>
+      </form>
+
+      <div id="guestbook-entries" class="guestbook-entries">
+        <p class="loading">Loading entries&hellip;</p>
+      </div>
+    </section>
+
     <!-- About Section -->
     <section class="about-section">
       <h2>About</h2>

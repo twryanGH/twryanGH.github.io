@@ -28,3 +28,69 @@
     el.innerHTML = '<p style="opacity:.5">Could not load sunrise data</p>';
   }
 })();
+
+// ── Guestbook ─────────────────────────────
+const API_URL = 'https://yza5ludi73.execute-api.us-east-1.amazonaws.com/Prod/guestbook';
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function renderEntries(entries) {
+  const container = document.getElementById('guestbook-entries');
+  if (!entries.length) {
+    container.innerHTML = '<p style="opacity:.5;text-align:center">No entries yet — be the first!</p>';
+    return;
+  }
+  container.innerHTML = entries.map(e => `
+    <div class="gb-entry">
+      <div class="gb-header">
+        <span class="gb-name">${escapeHtml(e.name)}</span>
+        <span class="gb-date">${new Date(e.timestamp * 1000).toLocaleDateString()}</span>
+      </div>
+      <p class="gb-msg">${escapeHtml(e.message)}</p>
+    </div>
+  `).join('');
+}
+
+async function loadEntries() {
+  try {
+    const res = await fetch(API_URL);
+    const entries = await res.json();
+    renderEntries(entries);
+  } catch {
+    document.getElementById('guestbook-entries').innerHTML =
+      '<p style="opacity:.5;text-align:center">Could not load guestbook</p>';
+  }
+}
+
+document.getElementById('guestbook-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = e.target.querySelector('button');
+  const nameInput = document.getElementById('gb-name');
+  const msgInput = document.getElementById('gb-message');
+
+  btn.disabled = true;
+  btn.textContent = 'Posting…';
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: nameInput.value, message: msgInput.value }),
+    });
+    if (!res.ok) throw new Error('Post failed');
+    nameInput.value = '';
+    msgInput.value = '';
+    await loadEntries();
+  } catch {
+    alert('Could not post your entry. Please try again.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Post';
+  }
+});
+
+loadEntries();
