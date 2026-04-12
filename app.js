@@ -44,15 +44,21 @@ function renderEntries(entries) {
     container.innerHTML = '<p style="opacity:.5;text-align:center">No entries yet — be the first!</p>';
     return;
   }
-  container.innerHTML = entries.map(e => `
-    <div class="gb-entry">
-      <div class="gb-header">
-        <span class="gb-name">${escapeHtml(e.name)}</span>
-        <span class="gb-date">${new Date(e.timestamp * 1000).toLocaleDateString()}</span>
+  container.innerHTML = entries.map(e => {
+    const labelsHtml = e.photoLabels && e.photoLabels.length
+      ? `<p class="gb-labels">&#129302; AI saw: ${e.photoLabels.map(l => escapeHtml(l)).join(', ')}</p>`
+      : '';
+    return `
+      <div class="gb-entry">
+        <div class="gb-header">
+          <span class="gb-name">${escapeHtml(e.name)}</span>
+          <span class="gb-date">${new Date(e.timestamp * 1000).toLocaleDateString()}</span>
+        </div>
+        <p class="gb-msg">${escapeHtml(e.message)}</p>
+        ${labelsHtml}
       </div>
-      <p class="gb-msg">${escapeHtml(e.message)}</p>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 async function loadEntries() {
@@ -71,19 +77,38 @@ document.getElementById('guestbook-form').addEventListener('submit', async (e) =
   const btn = e.target.querySelector('button');
   const nameInput = document.getElementById('gb-name');
   const msgInput = document.getElementById('gb-message');
+  const photoInput = document.getElementById('gb-photo');
+  const previewEl = document.getElementById('photo-preview');
 
   btn.disabled = true;
   btn.textContent = 'Posting…';
 
   try {
+    const payload = { name: nameInput.value, message: msgInput.value };
+
+    // Read photo as base64 if one was selected
+    if (photoInput.files.length > 0) {
+      btn.textContent = 'Analyzing photo…';
+      payload.image = await readFileAsBase64(photoInput.files[0]);
+    }
+
     const res = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: nameInput.value, message: msgInput.value }),
+      body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error('Post failed');
+
+    const result = await res.json();
+
+    // Show what Rekognition found
+    if (result.photoLabels && result.photoLabels.length) {
+      previewEl.innerHTML = `&#9989; AI identified: <strong>${result.photoLabels.join(', ')}</strong>`;
+    }
+
     nameInput.value = '';
     msgInput.value = '';
+    photoInput.value = '';
     await loadEntries();
   } catch {
     alert('Could not post your entry. Please try again.');
@@ -92,5 +117,14 @@ document.getElementById('guestbook-form').addEventListener('submit', async (e) =
     btn.textContent = 'Post';
   }
 });
+
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 loadEntries();

@@ -74,6 +74,11 @@
       <form id="guestbook-form" class="guestbook-form">
         <input type="text" id="gb-name" placeholder="Your name" maxlength="50" required>
         <textarea id="gb-message" placeholder="Describe your sunrise moment..." maxlength="500" rows="3" required></textarea>
+        <div class="photo-upload">
+          <label for="gb-photo" class="photo-label">&#128247; Attach a photo (optional &mdash; AI will identify it)</label>
+          <input type="file" id="gb-photo" accept="image/*">
+          <p id="photo-preview" class="photo-preview"></p>
+        </div>
         <button type="submit">Post</button>
       </form>
 

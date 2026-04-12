@@ -233,6 +233,28 @@ a { color: var(--gold); }
 .guestbook-form button:hover { opacity: .85; }
 .guestbook-form button:disabled { opacity: .5; cursor: not-allowed; }
 
+.photo-upload {
+  text-align: left;
+}
+
+.photo-label {
+  font-size: .85rem;
+  opacity: .6;
+  display: block;
+  margin-bottom: .4rem;
+}
+
+.photo-upload input[type="file"] {
+  font-size: .85rem;
+  color: var(--light);
+}
+
+.photo-preview {
+  margin-top: .5rem;
+  font-size: .85rem;
+  color: var(--gold);
+}
+
 .guestbook-entries { text-align: left; }
 
 .gb-entry {
@@ -262,6 +284,13 @@ a { color: var(--gold); }
 .gb-entry .gb-msg {
   opacity: .8;
   line-height: 1.5;
+}
+
+.gb-entry .gb-labels {
+  margin-top: .4rem;
+  font-size: .85rem;
+  color: var(--gold);
+  opacity: .7;
 }
 
 /* ── About Section ─────────────────────── */
