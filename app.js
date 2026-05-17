@@ -125,19 +125,25 @@ function renderFallback(items) {
 
 function normalizeConfig(config) {
   const runtime = config.trigger === 'device' ? 'device' : 'cloud';
-  document.getElementById('runtime').value = runtime;
   return { ...config, runtime };
+}
+
+function syncRuntimeField(runtime) {
+  document.getElementById('runtime').value = runtime;
 }
 
 function renderRecommendation() {
   const finalConfig = normalizeConfig(readConfig());
   const recommendation = recommendations[finalConfig.trigger][finalConfig.notification];
+  const platformName = finalConfig.platform === 'iphone' ? 'iPhone' : 'Android';
+  const windowDescription = finalConfig.window === 'always' ? 'continuous monitoring' : 'controlled alert windows';
   const platformNote = finalConfig.platform === 'iphone' && finalConfig.trigger === 'device' && finalConfig.notification === 'sms'
     ? ' iPhone usually needs a cloud relay for SMS, so local-only delivery is less reliable.'
     : '';
 
+  syncRuntimeField(finalConfig.runtime);
   document.getElementById('recommendation-title').textContent = recommendation.title;
-  document.getElementById('recommendation-summary').textContent = `${recommendation.summary} This setup is optimized for ${finalConfig.platform === 'iphone' ? 'iPhone' : 'Android'} and ${finalConfig.window === 'always' ? 'continuous monitoring' : 'controlled alert windows'}.${platformNote}`;
+  document.getElementById('recommendation-summary').textContent = `${recommendation.summary} This setup is optimized for ${platformName} and ${windowDescription}.${platformNote}`;
 
   renderList('workflow-steps', buildWorkflow(finalConfig), true);
   renderList('security-checklist', buildSecurity(finalConfig));
