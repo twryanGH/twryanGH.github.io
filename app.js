@@ -41,7 +41,7 @@ function buildWorkflow(config) {
   const senderRule = `Watch for new email from ${config.sender || 'the selected sender'}.`;
   const keywordRule = config.keyword
     ? `Require the subject or body to include “${config.keyword}” before alerting.`
-    : 'Skip keyword filtering and alert on every matching email.';
+    : 'No keyword filter is set, so every email from the chosen sender will alert intentionally.';
   const windowRule = {
     always: 'Allow delivery at any time.',
     business: 'Delay or suppress alerts outside business hours.',
@@ -62,7 +62,11 @@ function buildWorkflow(config) {
     ? 'Store credentials and routing settings in the hosted environment with least-privilege access.'
     : 'Store automation settings on the phone and keep tokens limited to the mailbox and notification service.';
 
-  return [senderRule, keywordRule, windowRule, triggerStep, deliveryStep, runtimeStep];
+  const platformConstraint = config.platform === 'iphone' && config.trigger === 'device' && config.notification === 'sms'
+    ? 'For iPhone, direct on-device SMS is limited, so use a cloud relay if text delivery is mandatory.'
+    : null;
+
+  return [senderRule, keywordRule, windowRule, triggerStep, deliveryStep, runtimeStep, platformConstraint].filter(Boolean);
 }
 
 function buildSecurity(config) {
@@ -119,28 +123,21 @@ function renderFallback(items) {
   container.innerHTML = items.map(item => `<p>${item}</p>`).join('');
 }
 
-function syncRuntimeToTrigger(config) {
-  const runtimeSelect = document.getElementById('runtime');
-  if (config.trigger === 'device') runtimeSelect.value = 'device';
-  if (config.trigger === 'cloud' || config.trigger === 'provider') runtimeSelect.value = 'cloud';
-}
-
-function syncNotificationForDevice(config) {
-  const notificationSelect = document.getElementById('notification');
-  if (config.trigger === 'device' && config.platform === 'iphone' && config.notification === 'sms') {
-    notificationSelect.value = 'push';
-  }
+function normalizeConfig(config) {
+  const runtime = config.trigger === 'device' ? 'device' : 'cloud';
+  document.getElementById('runtime').value = runtime;
+  return { ...config, runtime };
 }
 
 function renderRecommendation() {
-  const config = readConfig();
-  syncRuntimeToTrigger(config);
-  syncNotificationForDevice(readConfig());
-  const finalConfig = readConfig();
+  const finalConfig = normalizeConfig(readConfig());
   const recommendation = recommendations[finalConfig.trigger][finalConfig.notification];
+  const platformNote = finalConfig.platform === 'iphone' && finalConfig.trigger === 'device' && finalConfig.notification === 'sms'
+    ? ' iPhone usually needs a cloud relay for SMS, so local-only delivery is less reliable.'
+    : '';
 
   document.getElementById('recommendation-title').textContent = recommendation.title;
-  document.getElementById('recommendation-summary').textContent = `${recommendation.summary} This setup is optimized for ${finalConfig.platform === 'iphone' ? 'iPhone' : 'Android'} and ${finalConfig.window === 'always' ? 'continuous monitoring' : 'controlled alert windows'}.`;
+  document.getElementById('recommendation-summary').textContent = `${recommendation.summary} This setup is optimized for ${finalConfig.platform === 'iphone' ? 'iPhone' : 'Android'} and ${finalConfig.window === 'always' ? 'continuous monitoring' : 'controlled alert windows'}.${platformNote}`;
 
   renderList('workflow-steps', buildWorkflow(finalConfig), true);
   renderList('security-checklist', buildSecurity(finalConfig));
