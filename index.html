@@ -3,106 +3,169 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Golden Hour | Sunrise & Photography</title>
+  <title>Email Alert Agent Planner</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-  <!-- Hero Section -->
   <header class="hero">
     <div class="hero-overlay"></div>
     <div class="hero-content">
-      <h1>Golden Hour</h1>
-      <p class="tagline">Chasing light across the world</p>
-      <div id="sunrise-info" class="sunrise-card">
-        <p class="loading">Loading sunrise data&hellip;</p>
+      <p class="eyebrow">Phone-ready automation blueprint</p>
+      <h1>Email Alert Agent Planner</h1>
+      <p class="tagline">Turn emails from one person into a fast text alert without exposing more data than you need.</p>
+      <div class="hero-summary">
+        <div>
+          <span class="summary-label">Best for reliability</span>
+          <strong>Cloud workflow + SMS gateway</strong>
+        </div>
+        <div>
+          <span class="summary-label">Best for privacy</span>
+          <strong>On-device automation + push alert</strong>
+        </div>
       </div>
     </div>
-    <div class="scroll-hint">&darr;</div>
   </header>
 
-  <!-- Gallery Section -->
   <main>
-    <section class="gallery-section">
-      <h2>Moments in Light</h2>
-      <div class="gallery">
-
-        <figure class="card">
-          <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&q=80"
-               alt="Golden sunrise over rolling hills" loading="lazy">
-          <figcaption>Dawn over the hills</figcaption>
-        </figure>
-
-        <figure class="card">
-          <img src="https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=600&q=80"
-               alt="Sunrise through tall grass in a meadow" loading="lazy">
-          <figcaption>Morning meadow</figcaption>
-        </figure>
-
-        <figure class="card">
-          <img src="https://images.unsplash.com/photo-1504701954957-2010ec3bcec1?w=600&q=80"
-               alt="Vivid orange sunrise over the ocean" loading="lazy">
-          <figcaption>Ocean ablaze</figcaption>
-        </figure>
-
-        <figure class="card">
-          <img src="https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=600&q=80"
-               alt="Misty forest at sunrise" loading="lazy">
-          <figcaption>Forest whisper</figcaption>
-        </figure>
-
-        <figure class="card">
-          <img src="https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=600&q=80"
-               alt="Dramatic sunrise with clouds" loading="lazy">
-          <figcaption>Skyfire</figcaption>
-        </figure>
-
-        <figure class="card">
-          <img src="https://images.unsplash.com/photo-1414609245224-afa02bfb3fda?w=600&q=80"
-               alt="Mountain lake at golden hour" loading="lazy">
-          <figcaption>Still waters</figcaption>
-        </figure>
-
+    <section class="planner-section">
+      <div class="section-heading">
+        <p class="section-kicker">Step 1</p>
+        <h2>Choose the setup</h2>
+        <p>Pick the platform, alert path, and trigger source you want the agent to use.</p>
       </div>
-    </section>
 
-    <!-- Guestbook Section -->
-    <section class="guestbook-section">
-      <h2>Sunrise Guestbook</h2>
-      <p class="guestbook-intro">Share your favourite sunrise moment</p>
+      <form id="planner-form" class="planner-grid">
+        <label>
+          <span>Phone platform</span>
+          <select id="platform" name="platform">
+            <option value="iphone">iPhone</option>
+            <option value="android">Android</option>
+          </select>
+        </label>
 
-      <form id="guestbook-form" class="guestbook-form">
-        <input type="text" id="gb-name" placeholder="Your name" maxlength="50" required>
-        <textarea id="gb-message" placeholder="Describe your sunrise moment..." maxlength="500" rows="3" required></textarea>
-        <div class="photo-upload">
-          <label for="gb-photo" class="photo-label">&#128247; Attach a photo (optional &mdash; AI will identify it)</label>
-          <input type="file" id="gb-photo" accept="image/*">
-          <p id="photo-preview" class="photo-preview"></p>
-        </div>
-        <button type="submit">Post</button>
+        <label>
+          <span>Notification path</span>
+          <select id="notification" name="notification">
+            <option value="sms">SMS text message</option>
+            <option value="push">High-priority push notification</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Trigger source</span>
+          <select id="trigger" name="trigger">
+            <option value="cloud">Cloud workflow</option>
+            <option value="device">On-device automation</option>
+            <option value="provider">Mail provider automation</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Where the agent runs</span>
+          <select id="runtime" name="runtime">
+            <option value="cloud">Cloud hosted</option>
+            <option value="device">On the phone</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Important sender</span>
+          <input id="sender" name="sender" type="email" value="person@example.com" placeholder="name@example.com" required>
+        </label>
+
+        <label>
+          <span>Optional subject keyword</span>
+          <input id="keyword" name="keyword" type="text" value="urgent" placeholder="urgent, invoice, approval">
+        </label>
+
+        <label>
+          <span>Delivery window</span>
+          <select id="window" name="window">
+            <option value="always">Any time</option>
+            <option value="business">Business hours only</option>
+            <option value="quiet">Quiet hours override for this sender</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Fallback alert</span>
+          <select id="fallback" name="fallback">
+            <option value="push">Secondary push notification</option>
+            <option value="email">Summary email</option>
+            <option value="log">Failure log only</option>
+          </select>
+        </label>
       </form>
+    </section>
 
-      <div id="guestbook-entries" class="guestbook-entries">
-        <p class="loading">Loading entries&hellip;</p>
+    <section class="results-section">
+      <div class="section-heading">
+        <p class="section-kicker">Step 2</p>
+        <h2>Recommended implementation</h2>
+        <p>The planner adapts the workflow, guardrails, and test steps to your choices.</p>
+      </div>
+
+      <div class="results-grid">
+        <article class="result-card result-card--highlight">
+          <p class="card-kicker">Primary recommendation</p>
+          <h3 id="recommendation-title">Cloud workflow with SMS relay</h3>
+          <p id="recommendation-summary"></p>
+        </article>
+
+        <article class="result-card">
+          <p class="card-kicker">Workflow</p>
+          <ol id="workflow-steps" class="ordered-list"></ol>
+        </article>
+
+        <article class="result-card">
+          <p class="card-kicker">Security</p>
+          <ul id="security-checklist" class="check-list"></ul>
+        </article>
+
+        <article class="result-card">
+          <p class="card-kicker">Validation</p>
+          <ul id="validation-checklist" class="check-list"></ul>
+        </article>
+
+        <article class="result-card result-card--wide">
+          <p class="card-kicker">Failure handling</p>
+          <div id="fallback-plan" class="fallback-plan"></div>
+        </article>
       </div>
     </section>
 
-    <!-- About Section -->
-    <section class="about-section">
-      <h2>About</h2>
-      <p>
-        There's something magical about the first light of day.
-        This site celebrates the beauty of sunrise and golden-hour
-        photography from around the world.
-      </p>
-      <p class="credit">
-        Photos courtesy of <a href="https://unsplash.com" target="_blank" rel="noopener">Unsplash</a>
-      </p>
+    <section class="guide-section">
+      <div class="section-heading">
+        <p class="section-kicker">Step 3</p>
+        <h2>Platform guidance</h2>
+      </div>
+
+      <div class="guide-grid">
+        <article class="guide-card">
+          <h3>iPhone</h3>
+          <p>Best when paired with Shortcuts or a cloud watcher that sends SMS through Twilio or another gateway.</p>
+          <ul>
+            <li>Use cloud delivery if you need dependable background email polling.</li>
+            <li>Prefer push notifications if you want less carrier cost and less message forwarding.</li>
+            <li>Keep the alert payload short: sender, subject, and a link back to the message.</li>
+          </ul>
+        </article>
+
+        <article class="guide-card">
+          <h3>Android</h3>
+          <p>Flexible for on-device automation through Tasker, notification listeners, or a cloud-triggered companion app.</p>
+          <ul>
+            <li>On-device flows can react faster when the phone is already receiving synced mail.</li>
+            <li>SMS remains a good fit when the alert must cut through notification settings.</li>
+            <li>Use do-not-disturb exceptions carefully so only the chosen sender breaks through.</li>
+          </ul>
+        </article>
+      </div>
     </section>
   </main>
 
   <footer>
-    <p>&copy; 2026 Golden Hour &mdash; built with &#9728;&#65039;</p>
+    <p>&copy; 2026 Email Alert Agent Planner</p>
   </footer>
 
   <script src="app.js"></script>

@@ -1,130 +1,152 @@
-// Fetch sunrise/sunset times for the visitor's location
-(async function () {
-  const el = document.getElementById('sunrise-info');
+const form = document.getElementById('planner-form');
 
-  try {
-    // Get approximate location from IP
-    const geo = await fetch('https://ipapi.co/json/').then(r => r.json());
-    const { latitude, longitude, city } = geo;
+const recommendations = {
+  cloud: {
+    sms: {
+      title: 'Cloud workflow with SMS relay',
+      summary: 'Use a hosted mailbox watcher to filter incoming mail and send a short text message only when the target sender matches.',
+    },
+    push: {
+      title: 'Cloud workflow with push handoff',
+      summary: 'Use a hosted mailbox watcher and deliver a high-priority push through your phone automation or notification service.',
+    },
+  },
+  device: {
+    sms: {
+      title: 'On-device agent with SMS fallback',
+      summary: 'Let the phone watch synced mail locally, then trigger a text only for the chosen sender when the device can reliably process the event.',
+    },
+    push: {
+      title: 'On-device agent with priority push',
+      summary: 'Keep the entire flow on the phone and raise a focused push notification when mail from the selected sender appears.',
+    },
+  },
+  provider: {
+    sms: {
+      title: 'Mail provider rule with SMS action',
+      summary: 'Use the mail provider to label or route matching messages, then bridge that signal into an SMS alert.',
+    },
+    push: {
+      title: 'Mail provider rule with push action',
+      summary: 'Use provider-side filtering and let a notification service handle delivery to the phone.',
+    },
+  },
+};
 
-    // Get sunrise/sunset from Sunrise-Sunset API
-    const url = `https://api.sunrise-sunset.org/json?lat=${latitude}&lng=${longitude}&formatted=0`;
-    const data = await fetch(url).then(r => r.json());
-
-    if (data.status !== 'OK') throw new Error('API error');
-
-    const fmt = iso => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-    el.innerHTML = `
-      <p style="margin-bottom:.75rem;opacity:.6;font-size:.8rem">${city || 'Your location'} &mdash; today</p>
-      <div class="sun-times">
-        <span><span class="label">Sunrise</span><span class="time">${fmt(data.results.sunrise)}</span></span>
-        <span><span class="label">Solar Noon</span><span class="time">${fmt(data.results.solar_noon)}</span></span>
-        <span><span class="label">Sunset</span><span class="time">${fmt(data.results.sunset)}</span></span>
-        <span><span class="label">Day Length</span><span class="time">${(data.results.day_length / 3600).toFixed(1)}h</span></span>
-      </div>
-    `;
-  } catch {
-    el.innerHTML = '<p style="opacity:.5">Could not load sunrise data</p>';
-  }
-})();
-
-// ── Guestbook ─────────────────────────────
-const API_URL = 'https://yza5ludi73.execute-api.us-east-1.amazonaws.com/Prod/guestbook';
-
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
+function readConfig() {
+  return Object.fromEntries(new FormData(form).entries());
 }
 
-function renderEntries(entries) {
-  const container = document.getElementById('guestbook-entries');
-  if (!entries.length) {
-    container.innerHTML = '<p style="opacity:.5;text-align:center">No entries yet — be the first!</p>';
-    return;
-  }
-  container.innerHTML = entries.map(e => {
-    const labelsHtml = e.photoLabels && e.photoLabels.length
-      ? `<p class="gb-labels">&#129302; AI saw: ${e.photoLabels.map(l => escapeHtml(l)).join(', ')}</p>`
-      : '';
-    return `
-      <div class="gb-entry">
-        <div class="gb-header">
-          <span class="gb-name">${escapeHtml(e.name)}</span>
-          <span class="gb-date">${new Date(e.timestamp * 1000).toLocaleDateString()}</span>
-        </div>
-        <p class="gb-msg">${escapeHtml(e.message)}</p>
-        ${labelsHtml}
-      </div>
-    `;
-  }).join('');
+function buildWorkflow(config) {
+  const senderRule = `Watch for new email from ${config.sender || 'the selected sender'}.`;
+  const keywordRule = config.keyword
+    ? `Require the subject or body to include “${config.keyword}” before alerting.`
+    : 'Skip keyword filtering and alert on every matching email.';
+  const windowRule = {
+    always: 'Allow delivery at any time.',
+    business: 'Delay or suppress alerts outside business hours.',
+    quiet: 'Allow this sender to override quiet hours, but keep all other mail muted.',
+  }[config.window];
+
+  const triggerStep = {
+    cloud: 'Run the mailbox watcher in a hosted workflow so it keeps working even when the phone is offline.',
+    device: 'Run the watcher on the phone using local automation tied to the mail app or synced notifications.',
+    provider: 'Let the mail provider apply a rule or label first, then use that event as the notification trigger.',
+  }[config.trigger];
+
+  const deliveryStep = config.notification === 'sms'
+    ? 'Send a short SMS with the sender, subject, and a link or reminder to open the full email.'
+    : 'Send a high-priority push notification with the sender and subject only.';
+
+  const runtimeStep = config.runtime === 'cloud'
+    ? 'Store credentials and routing settings in the hosted environment with least-privilege access.'
+    : 'Store automation settings on the phone and keep tokens limited to the mailbox and notification service.';
+
+  return [senderRule, keywordRule, windowRule, triggerStep, deliveryStep, runtimeStep];
 }
 
-async function loadEntries() {
-  try {
-    const res = await fetch(API_URL);
-    const entries = await res.json();
-    renderEntries(entries);
-  } catch {
-    document.getElementById('guestbook-entries').innerHTML =
-      '<p style="opacity:.5;text-align:center">Could not load guestbook</p>';
+function buildSecurity(config) {
+  return [
+    'Use a dedicated mailbox integration account or scoped API token instead of your main password.',
+    `Only inspect messages from ${config.sender || 'the selected sender'} and avoid forwarding the full body unless absolutely required.`,
+    config.notification === 'sms'
+      ? 'Limit SMS content to the sender and subject so sensitive content does not travel over text.'
+      : 'Keep push content minimal and require the phone to unlock before revealing message details.',
+    config.runtime === 'cloud'
+      ? 'Protect secrets in the hosted workflow and rotate them if the automation changes owners or services.'
+      : 'Back up the automation locally and protect the phone with device encryption and biometric unlock.',
+  ];
+}
+
+function buildValidation(config) {
+  return [
+    `Send a test email from ${config.sender || 'the selected sender'} and verify that exactly one ${config.notification === 'sms' ? 'text message' : 'push alert'} arrives.`,
+    'Send a control email from a different sender and confirm that no alert is delivered.',
+    config.keyword
+      ? `Send one matching message with “${config.keyword}” and one without it to verify the keyword filter.`
+      : 'Confirm that the sender filter alone triggers the alert without false positives.',
+    'Temporarily disable the primary notification channel and confirm the fallback behavior still fires.',
+  ];
+}
+
+function buildFallback(config) {
+  const label = {
+    push: 'secondary push notification',
+    email: 'summary email',
+    log: 'failure log',
+  }[config.fallback];
+
+  const retry = config.trigger === 'device'
+    ? 'If the phone misses a local event, queue the alert and retry when mail sync resumes.'
+    : 'Retry failed deliveries with exponential backoff before marking the alert as missed.';
+
+  return [
+    `If the primary ${config.notification === 'sms' ? 'SMS' : 'push'} delivery fails, create a ${label}.`,
+    retry,
+    'Record the time, sender, and delivery result so you can audit missed alerts without storing the full message.',
+  ];
+}
+
+function renderList(elementId, items, ordered = false) {
+  const container = document.getElementById(elementId);
+  container.innerHTML = items
+    .map(item => ordered ? `<li>${item}</li>` : `<li><span class="check-icon">✓</span><span>${item}</span></li>`)
+    .join('');
+}
+
+function renderFallback(items) {
+  const container = document.getElementById('fallback-plan');
+  container.innerHTML = items.map(item => `<p>${item}</p>`).join('');
+}
+
+function syncRuntimeToTrigger(config) {
+  const runtimeSelect = document.getElementById('runtime');
+  if (config.trigger === 'device') runtimeSelect.value = 'device';
+  if (config.trigger === 'cloud' || config.trigger === 'provider') runtimeSelect.value = 'cloud';
+}
+
+function syncNotificationForDevice(config) {
+  const notificationSelect = document.getElementById('notification');
+  if (config.trigger === 'device' && config.platform === 'iphone' && config.notification === 'sms') {
+    notificationSelect.value = 'push';
   }
 }
 
-document.getElementById('guestbook-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const btn = e.target.querySelector('button');
-  const nameInput = document.getElementById('gb-name');
-  const msgInput = document.getElementById('gb-message');
-  const photoInput = document.getElementById('gb-photo');
-  const previewEl = document.getElementById('photo-preview');
+function renderRecommendation() {
+  const config = readConfig();
+  syncRuntimeToTrigger(config);
+  syncNotificationForDevice(readConfig());
+  const finalConfig = readConfig();
+  const recommendation = recommendations[finalConfig.trigger][finalConfig.notification];
 
-  btn.disabled = true;
-  btn.textContent = 'Posting…';
+  document.getElementById('recommendation-title').textContent = recommendation.title;
+  document.getElementById('recommendation-summary').textContent = `${recommendation.summary} This setup is optimized for ${finalConfig.platform === 'iphone' ? 'iPhone' : 'Android'} and ${finalConfig.window === 'always' ? 'continuous monitoring' : 'controlled alert windows'}.`;
 
-  try {
-    const payload = { name: nameInput.value, message: msgInput.value };
-
-    // Read photo as base64 if one was selected
-    if (photoInput.files.length > 0) {
-      btn.textContent = 'Analyzing photo…';
-      payload.image = await readFileAsBase64(photoInput.files[0]);
-    }
-
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error('Post failed');
-
-    const result = await res.json();
-
-    // Show what Rekognition found
-    if (result.photoLabels && result.photoLabels.length) {
-      previewEl.innerHTML = `&#9989; AI identified: <strong>${result.photoLabels.join(', ')}</strong>`;
-    }
-
-    nameInput.value = '';
-    msgInput.value = '';
-    photoInput.value = '';
-    await loadEntries();
-  } catch {
-    alert('Could not post your entry. Please try again.');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Post';
-  }
-});
-
-function readFileAsBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+  renderList('workflow-steps', buildWorkflow(finalConfig), true);
+  renderList('security-checklist', buildSecurity(finalConfig));
+  renderList('validation-checklist', buildValidation(finalConfig));
+  renderFallback(buildFallback(finalConfig));
 }
 
-loadEntries();
+form.addEventListener('input', renderRecommendation);
+renderRecommendation();
